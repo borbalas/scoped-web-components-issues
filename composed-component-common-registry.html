@@ -1,0 +1,132 @@
+<!--
+/**
+ * @license
+ * Copyright (c) 2020 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at
+ * http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at
+ * http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+-->
+
+<script src="https://cdn.jsdelivr.net/npm/@webcomponents/scoped-custom-element-registry@0.0.6/scoped-custom-element-registry.min.js"></script>
+
+<script type="module">
+  const baseStyle = `
+    :host {
+      display: inline-block;
+      border: 1px solid gray;
+      padding: 5px;
+      margin: 5px;
+    }`;
+
+  class ChildElementAButton extends HTMLElement {
+    static observedAttributes = ['attr'];
+    get name() {
+      return `${this.localName} (ChildElementButton)`;
+    }
+    constructor() {
+      super();
+      console.log('constructed', this.name);
+      this.attachShadow({mode: 'open'}).innerHTML = `
+        <style>${baseStyle} :host { background: lightgreen; }</style>
+        <button>Click on child button</button>
+        ${this.name}
+      `;
+    }
+    connectedCallback() {
+      console.log('connected', this.name);
+    }
+    attributeChangedCallback(name, old, value) {
+      console.log(`attributeChangedCallback`, this.name, `${name}=${value}`);
+    }
+  }
+
+  class ChildElementA extends HTMLElement {
+    static observedAttributes = ['attr'];
+    get name() {
+      return `${this.localName} (ChildElementA)`;
+    }
+    constructor() {
+      super();
+      console.log('constructed', this.name);
+      this.attachShadow({mode: 'open'}).innerHTML = `
+        <style>${baseStyle} :host { background: lightblue; }</style>
+        <child-element-button id="childButon" attr="child:childButton">nope</child-element-button>
+        ${this.name}
+      `;
+    }
+    connectedCallback() {
+      console.log('connected', this.name);
+    }
+    attributeChangedCallback(name, old, value) {
+      console.log(`attributeChangedCallback`, this.name, `${name}=${value}`);
+    }
+  }
+
+  const hostRegistryA = new CustomElementRegistry();
+  hostRegistryA
+    .whenDefined('child-element')
+    .then(() =>
+      console.log(
+        'child-element defined in hostRegistryA:',
+        hostRegistryA.get('child-element')
+      )
+    );
+  hostRegistryA
+    .whenDefined('child-element-button')
+    .then(() =>
+      console.log(
+        'child-element-button defined in hostRegistryA:',
+        hostRegistryA.get('child-element-button')
+      )
+    );
+  
+  hostRegistryA.define('child-element-button', ChildElementAButton);
+  hostRegistryA.define('child-element', ChildElementA);
+
+  class HostElementA extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({
+        mode: 'open',
+        customElements: hostRegistryA,
+      }).innerHTML = `
+        <style>${baseStyle} :host { background: pink; }</style>
+        HostElementA
+        <child-element id="hostA" attr="child:hostA"></child-element>
+      `;;
+    }
+  }
+
+  class HostElementAIcon extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({
+        mode: 'open',
+        customElements: hostRegistryA,
+      }).innerHTML = `
+        <style>${baseStyle} :host { background: pink; }</style>
+        HostElementA
+        <child-element-button id="hostA" attr="child:hostA"></child-element-button>
+      `;;
+    }
+  }
+
+  customElements.define('host-element-a', HostElementA);
+  customElements.define('host-element-a-icon', HostElementAIcon);
+
+  //Registry child button on global registry
+  customElements.define('child-element-button', ChildElementAButton);
+
+  
+</script>
+
+<host-element-a></host-element-a>
+<hr />
+<host-element-a-icon></host-element-a-icon>
